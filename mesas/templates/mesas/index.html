@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍺 Gestión de Mesas - Sistema POS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #794ba7 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2em;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        
+        .mesas-grid {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .mesa-card {
+            position: relative;
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .mesa-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .mesa-libre {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .mesa-ocupada {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+        
+        .mesa-reservada {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+            color: white;
+        }
+        
+        /* Vista circular de mesas */
+        .vista-toggle {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .vista-btn {
+            padding: 8px 20px;
+            margin: 0 5px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .vista-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .grid-circular {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .mesa-circular {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .mesa-circular:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        
+        .mesa-circular.libre {
+            background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+            border: 4px solid #654321;
+        }
+        
+        .mesa-circular.ocupada {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: 4px solid #0d7377;
+        }
+        
+        .mesa-circular.reservada {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+            border: 4px solid #e67e22;
+        }
+        
+        .mesa-circular-numero {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .mesa-circular-capacidad {
+            font-size: 0.9em;
+            color: white;
+            margin-top: 5px;
+            background: rgba(0,0,0,0.2);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+        
+        .mesa-circular-tiempo {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #fff;
+            color: #333;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .mesa-numero {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .mesa-info {
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .mesa-tiempo {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.8em;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .sesion-activa {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .sesion-activa h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .pedido-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .pedido-item:last-child {
+            border-bottom: none;
+        }
+        
+        .total-cuenta {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: right;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-block {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: white;
+            border: none;
+            padding: 0;
+        }
+        
+        .close {
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #f0f0f0;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .producto-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .producto-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+            transform: scale(1.05);
+        }
+        
+        .producto-btn.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .producto-nombre {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .producto-precio {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .producto-btn.selected .producto-precio {
+            color: white;
+        }
+        
+        .carrito-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .carrito-item-info {
+            flex: 1;
+        }
+        
+        .carrito-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cantidad-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .cantidad-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .cantidad-btn:hover {
+            background: #764ba2;
+        }
+        
+        .cantidad-valor {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .btn-eliminar {
+            background: #eb3349;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .historial-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .historial-item strong {
+            color: #667eea;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>🍺 Gestión de Mesas</h1>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalMesas">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="mesasLibres">0</div>
+                        <div class="stat-label">Libres</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="mesasOcupadas">0</div>
+                        <div class="stat-label">Ocupadas</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="mesas-grid">
+                <h2 style="color: #333; margin-bottom: 10px;">Mesas Disponibles</h2>
+                <div class="vista-toggle">
+                    <button class="vista-btn active" onclick="cambiarVista('circular')">🔘 Vista Circular</button>
+                    <button class="vista-btn" onclick="cambiarVista('grid')">⊞ Vista Cuadrícula</button>
+                </div>
+                <div class="grid-circular" id="mesasContainer">
+                    <!-- Mesas se cargan dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="panel" id="mesaSeleccionadaPanel" style="display: none;">
+                    <h2>Mesa Seleccionada</h2>
+                    <div id="mesaSeleccionadaInfo"></div>
+                </div>
+                
+                <div class="panel">
+                    <h2>Sesiones Activas</h2>
+                    <div id="sesionesActivas">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🍽️</div>
+                            <p>No hay sesiones activas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Abrir Mesa -->
+    <div id="modalAbrirMesa" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Abrir Mesa</h2>
+                <span class="close" onclick="cerrarModal('modalAbrirMesa')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="formAbrirMesa">
+                    <input type="hidden" id="mesaIdAbrir">
+                    
+                    <div class="form-group">
+                        <label>Cliente (Socio)</label>
+                        <select id="clienteSelect" required>
+                            <option value="">Seleccione un cliente...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Número de Personas</label>
+                        <input type="number" id="numeroPersonas" min="1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Notas (opcional)</label>
+                        <textarea id="notasMesa" rows="3"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-block">Abrir Mesa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Gestionar Mesa -->
+    <div id="modalGestionarMesa" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="tituloGestionMesa">Gestionar Mesa</h2>
+                <span class="close" onclick="cerrarModal('modalGestionarMesa')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="mesaIdGestionar">
+                <input type="hidden" id="sesionIdGestionar">
+                
+                <div id="infoMesaGestion" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px;"></div>
+                
+                <h3 style="color: #333; margin-bottom: 15px;">🛒 Agregar Productos</h3>
+                <div class="productos-grid" id="productosGrid"></div>
+                
+                <h3 style="color: #333; margin-bottom: 15px; margin-top: 20px;">🧾 Pedido Actual</h3>
+                <div id="carritoItems"></div>
+                <div class="total-cuenta" id="totalCarrito">Total: €0.00</div>
+                
+                <button type="button" class="btn btn-success btn-block" onclick="guardarPedido()">💾 Guardar Pedido</button>
+                <button type="button" class="btn btn-danger btn-block" onclick="cerrarMesaActual()">🔒 Cerrar Mesa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pago -->
+    <div id="modalPago" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>💳 Procesar Pago</h2>
+                <span class="close" onclick="cerrarModal('modalPago')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="resumenPago" style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <h3 style="color: #333; margin-bottom: 10px;">Total a Pagar</h3>
+                    <div style="font-size: 48px; font-weight: bold; color: #11998e;" id="totalPago">€0.00</div>
+                </div>
+                
+                <h3 style="color: #333; margin-bottom: 15px;">Método de Pago</h3>
+                <div style="display: grid; gap: 10px;">
+                    <button type="button" class="btn btn-pago" onclick="procesarPago('efectivo')" style="background: #27ae60; color: white; padding: 20px; font-size: 18px; border-radius: 10px;">
+                        💵 Efectivo
+                    </button>
+                    <button type="button" class="btn btn-pago" onclick="procesarPago('tarjeta')" style="background: #3498db; color: white; padding: 20px; font-size: 18px; border-radius: 10px;">
+                        💳 Tarjeta
+                    </button>
+                    <button type="button" class="btn btn-pago" onclick="procesarPago('transferencia')" style="background: #9b59b6; color: white; padding: 20px; font-size: 18px; border-radius: 10px;">
+                        🏦 Transferencia
+                    </button>
+                </div>
+                
+                <button type="button" class="btn btn-secondary btn-block" onclick="cerrarModal('modalPago')" style="margin-top: 20px;">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let mesas = [];
+        let socios = [];
+        let productos = [];
+        let carrito = [];
+        let mesaActual = null;
+        let sesionActual = null;
+        let vistaActual = 'circular';
+
+        // Obtener CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // Cargar datos iniciales
+        async function cargarDatos() {
+            try {
+                console.log('Cargando datos...');
+                
+                // Cargar mesas
+                const resMesas = await fetch('/mesas/mesas/');
+                if (!resMesas.ok) throw new Error('Error cargando mesas: ' + resMesas.status);
+                const dataMesas = await resMesas.json();
+                mesas = Array.isArray(dataMesas) ? dataMesas : (dataMesas.results || []);
+                console.log('Mesas cargadas:', mesas.length);
+                
+                // Cargar socios
+                const resSocios = await fetch('/api/socios/');
+                if (!resSocios.ok) throw new Error('Error cargando socios: ' + resSocios.status);
+                const dataSocios = await resSocios.json();
+                socios = Array.isArray(dataSocios) ? dataSocios : (dataSocios.results || []);
+                console.log('Socios cargados:', socios.length);
+                
+                // Cargar productos
+                const resProductos = await fetch('/api/productos/');
+                if (!resProductos.ok) throw new Error('Error cargando productos: ' + resProductos.status);
+                const dataProductos = await resProductos.json();
+                productos = Array.isArray(dataProductos) ? dataProductos : (dataProductos.results || []);
+                console.log('Productos cargados:', productos.length);
+                
+                console.log('Renderizando interfaz...');
+                renderizarMesas();
+                renderizarSesionesActivas();
+                actualizarEstadisticas();
+                poblarSelectClientes();
+                console.log('✅ Datos cargados correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error cargando datos:', error);
+                console.error('Detalles:', error.message, error.stack);
+                alert('Error al cargar los datos: ' + error.message + '\n\nMira la consola para más detalles (F12).');
+            }
+        }
+
+        // Cambiar vista
+        function cambiarVista(tipo) {
+            vistaActual = tipo;
+            
+            // Actualizar botones
+            document.querySelectorAll('.vista-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Actualizar clase del container
+            const container = document.getElementById('mesasContainer');
+            if (tipo === 'circular') {
+                container.className = 'grid-circular';
+            } else {
+                container.className = 'grid-container';
+            }
+            
+            renderizarMesas();
+        }
+
+        // Renderizar mesas
+        function renderizarMesas() {
+            const container = document.getElementById('mesasContainer');
+            container.innerHTML = '';
+            
+            if (vistaActual === 'circular') {
+                // Vista circular
+                mesas.forEach(mesa => {
+                    const div = document.createElement('div');
+                    div.className = `mesa-circular ${mesa.estado}`;
+                    div.onclick = () => clickMesa(mesa);
+                    
+                    let contenido = `
+                        <div class="mesa-circular-numero">${mesa.numero}</div>
+                        <div class="mesa-circular-capacidad">👥 ${mesa.capacidad}</div>
+                    `;
+                    
+                    if (mesa.sesion_activa) {
+                        const duracion = calcularDuracion(mesa.sesion_activa.fecha_inicio);
+                        contenido += `<div class="mesa-circular-tiempo">⏱️ ${duracion}</div>`;
+                    }
+                    
+                    div.innerHTML = contenido;
+                    container.appendChild(div);
+                });
+            } else {
+                // Vista grid original
+                mesas.forEach(mesa => {
+                    const div = document.createElement('div');
+                    div.className = `mesa-card mesa-${mesa.estado}`;
+                    div.onclick = () => clickMesa(mesa);
+                    
+                    let contenido = `
+                        <div class="mesa-numero">Mesa ${mesa.numero}</div>
+                        <div class="mesa-info">👥 ${mesa.capacidad} personas</div>
+                    `;
+                    
+                    if (mesa.sesion_activa) {
+                        const duracion = calcularDuracion(mesa.sesion_activa.fecha_inicio);
+                        contenido += `
+                            <div class="mesa-tiempo">⏱️ ${duracion}</div>
+                            <div class="mesa-info" style="margin-top: 5px;">
+                                ${mesa.sesion_activa.cliente_nombre || 'Cliente'}
+                            </div>
+                        `;
+                    }
+                    
+                    div.innerHTML = contenido;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        // Calcular duración
+        function calcularDuracion(fechaInicio) {
+            const inicio = new Date(fechaInicio);
+            const ahora = new Date();
+            const diff = Math.floor((ahora - inicio) / 1000 / 60); // minutos
+            
+            const horas = Math.floor(diff / 60);
+            const minutos = diff % 60;
+            
+            return horas > 0 ? `${horas}h ${minutos}m` : `${minutos}m`;
+        }
+
+        // Click en mesa
+        function clickMesa(mesa) {
+            if (mesa.estado === 'libre') {
+                // Mostrar opciones: Abrir o Gestionar
+                if (confirm(`Mesa ${mesa.numero} está libre.\n\n¿Deseas ABRIRLA para un cliente?\n\nOK = Abrir mesa\nCancelar = Gestionar mesa libre`)) {
+                    abrirModalAbrirMesa(mesa);
+                } else {
+                    abrirModalGestionarMesa(mesa);
+                }
+            } else if (mesa.estado === 'ocupada') {
+                abrirModalGestionarMesa(mesa);
+            } else if (mesa.estado === 'reservada') {
+                abrirModalGestionarMesa(mesa);
+            }
+        }
+
+        // Abrir modal abrir mesa
+        function abrirModalAbrirMesa(mesa) {
+            document.getElementById('mesaIdAbrir').value = mesa.id;
+            document.getElementById('numeroPersonas').value = mesa.capacidad;
+            document.getElementById('modalAbrirMesa').style.display = 'block';
+        }
+
+        // Abrir modal gestionar mesa
+        async function abrirModalGestionarMesa(mesa) {
+            // Recargar datos de la mesa desde el servidor para tener info actualizada
+            try {
+                const res = await fetch(`/mesas/mesas/${mesa.id}/`);
+                if (res.ok) {
+                    mesa = await res.json();
+                    console.log('Mesa recargada:', mesa);
+                }
+            } catch (error) {
+                console.error('Error recargando mesa:', error);
+            }
+            
+            mesaActual = mesa;
+            // El campo puede ser sesion_activa (listado) o sesion_actual (detalle)
+            sesionActual = mesa.sesion_actual || mesa.sesion_activa;
+            
+            console.log('mesaActual:', mesaActual);
+            console.log('sesionActual:', sesionActual);
+            
+            document.getElementById('mesaIdGestionar').value = mesa.id;
+            document.getElementById('tituloGestionMesa').textContent = `Mesa ${mesa.numero}`;
+            
+            // Info de la mesa
+            const infoDiv = document.getElementById('infoMesaGestion');
+            
+            if (sesionActual) {
+                document.getElementById('sesionIdGestionar').value = sesionActual.id;
+                const duracion = calcularDuracion(sesionActual.hora_apertura);
+                infoDiv.innerHTML = `
+                    <strong>Estado:</strong> ${mesa.estado.toUpperCase()}<br>
+                    <strong>Cliente:</strong> ${sesionActual.nombre_cliente || 'N/A'}<br>
+                    <strong>Personas:</strong> ${sesionActual.numero_personas}<br>
+                    <strong>Tiempo:</strong> ${duracion}
+                `;
+                
+                // Cargar pedidos existentes
+                await cargarPedidosMesa(sesionActual.id);
+            } else {
+                // Mesa libre - permitir gestionar sin sesión
+                document.getElementById('sesionIdGestionar').value = '';
+                infoDiv.innerHTML = `
+                    <strong>Estado:</strong> ${mesa.estado.toUpperCase()}<br>
+                    <strong>Capacidad:</strong> ${mesa.capacidad} personas<br>
+                    <em style="color: #999;">Debes abrir la mesa primero para agregar pedidos</em>
+                `;
+                carrito = [];
+                renderizarCarrito();
+            }
+            
+            // Renderizar productos
+            renderizarProductos();
+            
+            document.getElementById('modalGestionarMesa').style.display = 'block';
+        }
+
+        // Cargar pedidos de la mesa
+        async function cargarPedidosMesa(sesionId) {
+            try {
+                // Por ahora, iniciamos con carrito vacío
+                // Podrías implementar la relación con órdenes POS aquí
+                carrito = [];
+                renderizarCarrito();
+                
+            } catch (error) {
+                console.error('Error cargando pedidos:', error);
+                carrito = [];
+                renderizarCarrito();
+            }
+        }
+
+        // Renderizar productos
+        function renderizarProductos() {
+            const grid = document.getElementById('productosGrid');
+            grid.innerHTML = '';
+            
+            productos.forEach(producto => {
+                const div = document.createElement('div');
+                div.className = 'producto-btn';
+                div.onclick = () => agregarAlCarrito(producto);
+                
+                div.innerHTML = `
+                    <div class="producto-nombre">${producto.nombre}</div>
+                    <div class="producto-precio">€${parseFloat(producto.precio_venta).toFixed(2)}</div>
+                `;
+                
+                grid.appendChild(div);
+            });
+        }
+
+        // Agregar al carrito
+        function agregarAlCarrito(producto) {
+            const itemExistente = carrito.find(item => item.producto.id === producto.id);
+            
+            if (itemExistente) {
+                itemExistente.cantidad++;
+            } else {
+                carrito.push({
+                    producto: producto,
+                    cantidad: 1
+                });
+            }
+            
+            renderizarCarrito();
+        }
+
+        // Renderizar carrito
+        function renderizarCarrito() {
+            const container = document.getElementById('carritoItems');
+            
+            if (carrito.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No hay productos en el pedido</p></div>';
+                document.getElementById('totalCarrito').textContent = 'Total: €0.00';
+                return;
+            }
+            
+            container.innerHTML = '';
+            let total = 0;
+            
+            carrito.forEach((item, index) => {
+                const subtotal = item.cantidad * parseFloat(item.producto.precio_venta);
+                total += subtotal;
+                
+                const div = document.createElement('div');
+                div.className = 'carrito-item';
+                div.innerHTML = `
+                    <div class="carrito-item-info">
+                        <strong>${item.producto.nombre}</strong><br>
+                        <small>€${parseFloat(item.producto.precio_venta).toFixed(2)} × ${item.cantidad} = €${subtotal.toFixed(2)}</small>
+                    </div>
+                    <div class="carrito-item-controls">
+                        <div class="cantidad-control">
+                            <button class="cantidad-btn" onclick="cambiarCantidad(${index}, -1)">-</button>
+                            <span class="cantidad-valor">${item.cantidad}</span>
+                            <button class="cantidad-btn" onclick="cambiarCantidad(${index}, 1)">+</button>
+                        </div>
+                        <button class="btn-eliminar" onclick="eliminarDelCarrito(${index})">🗑️</button>
+                    </div>
+                `;
+                
+                container.appendChild(div);
+            });
+            
+            document.getElementById('totalCarrito').textContent = `Total: €${total.toFixed(2)}`;
+        }
+
+        // Cambiar cantidad
+        function cambiarCantidad(index, delta) {
+            carrito[index].cantidad += delta;
+            if (carrito[index].cantidad <= 0) {
+                carrito.splice(index, 1);
+            }
+            renderizarCarrito();
+        }
+
+        // Eliminar del carrito
+        function eliminarDelCarrito(index) {
+            carrito.splice(index, 1);
+            renderizarCarrito();
+        }
+
+        // Guardar pedido
+        async function guardarPedido() {
+            if (carrito.length === 0) {
+                alert('El pedido está vacío');
+                return;
+            }
+            
+            // Verificar que hay una sesión activa Y que la mesa está ocupada
+            if (!sesionActual || mesaActual.estado !== 'ocupada') {
+                alert('⚠️ La mesa debe estar ocupada (abierta) para guardar un pedido');
+                return;
+            }
+            
+            try {
+                // Crear orden POS vinculada a la sesión de mesa
+                const orden = {
+                    id_sesion: `Mesa ${mesaActual.numero}`,
+                    sesion_mesa: sesionActual.id,
+                    cliente: sesionActual.cliente,
+                    lineas: carrito.map(item => ({
+                        producto: item.producto.id,
+                        cantidad: item.cantidad,
+                        precio_subtotal: item.producto.precio_venta * item.cantidad
+                    }))
+                };
+                
+                const res = await fetch('/api/ordenes-pos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(orden)
+                });
+                
+                if (res.ok) {
+                    alert('✅ Pedido guardado correctamente');
+                    carrito = [];
+                    renderizarCarrito();
+                    
+                    // Recargar datos de la mesa actual sin cerrar el modal
+                    const mesaId = mesaActual.id;
+                    await cargarDatos();
+                    
+                    // Reabrir el modal con los datos actualizados
+                    const mesaActualizada = mesas.find(m => m.id === mesaId);
+                    if (mesaActualizada) {
+                        await abrirModalGestionarMesa(mesaActualizada);
+                    }
+                } else {
+                    const error = await res.json();
+                    alert('Error al guardar el pedido: ' + JSON.stringify(error));
+                }
+                
+            } catch (error) {
+                console.error('Error guardando pedido:', error);
+                alert('Error al guardar el pedido: ' + error.message);
+            }
+        }
+
+        // Cerrar mesa actual
+        async function cerrarMesaActual() {
+            if (!sesionActual) {
+                alert('No hay sesión activa');
+                return;
+            }
+            
+            // Obtener el total de la cuenta
+            try {
+                const res = await fetch(`/mesas/mesas/${mesaActual.id}/cuenta/`);
+                const data = await res.json();
+                
+                if (res.ok) {
+                    const total = parseFloat(data.total) || 0;
+                    
+                    // Mostrar modal de pago
+                    document.getElementById('totalPago').textContent = `€${total.toFixed(2)}`;
+                    abrirModal('modalPago');
+                } else {
+                    console.error('Error en cuenta:', data);
+                    alert('Error al obtener el total de la cuenta: ' + (data.error || JSON.stringify(data)));
+                }
+            } catch (error) {
+                console.error('Error obteniendo cuenta:', error);
+                alert('Error al obtener el total de la cuenta: ' + error.message);
+            }
+        }
+        
+        async function procesarPago(metodoPago) {
+            try {
+                const res = await fetch(`/mesas/mesas/${mesaActual.id}/cerrar/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        metodo_pago: metodoPago
+                    })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(`✅ Mesa cerrada correctamente\n💰 Total: €${data.total}\n💳 Método: ${metodoPago.toUpperCase()}\n📦 Órdenes procesadas: ${data.ordenes_procesadas}`);
+                    cerrarModal('modalPago');
+                    cerrarModal('modalGestionarMesa');
+                    await cargarDatos();
+                } else {
+                    const error = await res.json();
+                    alert('Error al cerrar la mesa: ' + (error.error || 'Error desconocido'));
+                }
+                
+            } catch (error) {
+                console.error('Error cerrando mesa:', error);
+                alert('Error al cerrar la mesa');
+            }
+        }
+
+        // Poblar select de clientes
+        function poblarSelectClientes() {
+            const select = document.getElementById('clienteSelect');
+            select.innerHTML = '<option value="">Seleccione un cliente...</option>';
+            
+            socios.forEach(socio => {
+                const option = document.createElement('option');
+                option.value = socio.id;
+                option.textContent = socio.nombre;
+                select.appendChild(option);
+            });
+        }
+
+        // Form abrir mesa
+        document.getElementById('formAbrirMesa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mesaId = document.getElementById('mesaIdAbrir').value;
+            const clienteId = document.getElementById('clienteSelect').value;
+            const numeroPersonas = document.getElementById('numeroPersonas').value;
+            const notas = document.getElementById('notasMesa').value;
+            
+            try {
+                const res = await fetch(`/mesas/mesas/${mesaId}/abrir/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify({
+                        cliente: clienteId || null,
+                        numero_personas: numeroPersonas,
+                        notas: notas
+                    })
+                });
+                
+                if (res.ok) {
+                    alert('✅ Mesa abierta correctamente');
+                    cerrarModal('modalAbrirMesa');
+                    document.getElementById('formAbrirMesa').reset();
+                    await cargarDatos();
+                } else {
+                    const error = await res.json();
+                    alert('Error al abrir la mesa: ' + JSON.stringify(error));
+                }
+                
+            } catch (error) {
+                console.error('Error abriendo mesa:', error);
+                alert('Error al abrir la mesa');
+            }
+        });
+
+        // Renderizar sesiones activas
+        function renderizarSesionesActivas() {
+            const container = document.getElementById('sesionesActivas');
+            const sesionesActivas = mesas.filter(m => m.sesion_activa);
+            
+            if (sesionesActivas.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🍽️</div>
+                        <p>No hay sesiones activas</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            sesionesActivas.forEach(mesa => {
+                const div = document.createElement('div');
+                div.className = 'sesion-activa';
+                div.style.cursor = 'pointer';
+                div.onclick = () => clickMesa(mesa);
+                
+                const duracion = calcularDuracion(mesa.sesion_activa.fecha_inicio);
+                
+                div.innerHTML = `
+                    <h3>Mesa ${mesa.numero}</h3>
+                    <p><strong>Cliente:</strong> ${mesa.sesion_activa.cliente_nombre || 'N/A'}</p>
+                    <p><strong>Personas:</strong> ${mesa.sesion_activa.numero_personas}</p>
+                    <p><strong>Tiempo:</strong> ${duracion}</p>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // Actualizar estadísticas
+        function actualizarEstadisticas() {
+            const libres = mesas.filter(m => m.estado === 'libre').length;
+            const ocupadas = mesas.filter(m => m.estado === 'ocupada').length;
+            
+            document.getElementById('totalMesas').textContent = mesas.length;
+            document.getElementById('mesasLibres').textContent = libres;
+            document.getElementById('mesasOcupadas').textContent = ocupadas;
+        }
+
+        // Cerrar modal
+        function abrirModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'modalGestionarMesa') {
+                carrito = [];
+                mesaActual = null;
+                sesionActual = null;
+            }
+        }
+
+        // Cerrar modal al hacer click fuera
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Auto-actualizar cada 30 segundos
+        setInterval(() => {
+            cargarDatos();
+        }, 30000);
+
+        // Cargar datos cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', cargarDatos);
+        } else {
+            // DOM ya está listo
+            cargarDatos();
+        }
+    </script>
+</body>
+</html>

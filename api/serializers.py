@@ -1,15 +1,10 @@
 from rest_framework import serializers
-from .models import Item, Factura
 
-
-class ItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Item
-        fields = ['id', 'name', 'description', 'created_at']
-
-
-class FacturaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Factura
-        fields = ['id', 'direccion', 'cliente', 'vendedor', 'fecha_creacion', 'cantidad_dinero']
-        read_only_fields = ['fecha_creacion']
+# La app 'api' se mantiene vacía
+# Todos los serializers han sido movidos a apps específicas:
+# - core.serializers: PartnerSerializer, ProductSerializer
+# - purchases.serializers: PurchaseOrderSerializer, PurchaseOrderLineSerializer
+# - inventory.serializers: WarehouseSerializer, StockQuantSerializer
+# - pos.serializers: PosOrderSerializer, PosOrderLineSerializer
+# - invoicing.serializers: InvoiceSerializer, PaymentSerializer
+# - hr.serializers: EmployeeSerializer

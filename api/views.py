@@ -1,13 +1,10 @@
 from rest_framework import viewsets
-from .models import Item, Factura
-from .serializers import ItemSerializer, FacturaSerializer
 
-
-class ItemViewSet(viewsets.ModelViewSet):
-    queryset = Item.objects.all().order_by('-created_at')
-    serializer_class = ItemSerializer
-
-
-class FacturaViewSet(viewsets.ModelViewSet):
-    queryset = Factura.objects.all().order_by('-fecha_creacion')
-    serializer_class = FacturaSerializer
+# La app 'api' se mantiene vacía
+# Todos los viewsets han sido movidos a apps específicas:
+# - core.views: PartnerViewSet, ProductViewSet
+# - purchases.views: PurchaseOrderViewSet, PurchaseOrderLineViewSet
+# - inventory.views: WarehouseViewSet, StockQuantViewSet
+# - pos.views: PosOrderViewSet, PosOrderLineViewSet
+# - invoicing.views: InvoiceViewSet, PaymentViewSet
+# - hr.views: EmployeeViewSet

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍺 Gestión de Mesas - Taberna de Moe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-card.libre {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .stat-card.ocupada {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .stat-card.reservada {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+        }
+
+        .mesas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f7f7f7;
+            border-radius: 10px;
+        }
+
+        .mesa {
+            aspect-ratio: 1;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .mesa:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+
+        .mesa.libre {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .mesa.ocupada {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .mesa.reservada {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        }
+
+        .mesa-numero {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .mesa-info {
+            color: white;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .mesa-total {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .cuenta-item {
+            padding: 15px;
+            background: #f7f7f7;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🍺 Taberna de Moe - Gestión de Mesas</h1>
+        <p>Sistema de control de mesas en tiempo real</p>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card libre">
+                <div>
+                    <div>Mesas Libres</div>
+                    <div class="stat-number" id="stat-libres">0</div>
+                </div>
+                <div style="font-size: 3em;">🟢</div>
+            </div>
+            <div class="stat-card ocupada">
+                <div>
+                    <div>Mesas Ocupadas</div>
+                    <div class="stat-number" id="stat-ocupadas">0</div>
+                </div>
+                <div style="font-size: 3em;">🔴</div>
+            </div>
+            <div class="stat-card reservada">
+                <div>
+                    <div>Mesas Reservadas</div>
+                    <div class="stat-number" id="stat-reservadas">0</div>
+                </div>
+                <div style="font-size: 3em;">🟡</div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            Cargando mesas...
+        </div>
+
+        <div id="mesas-container" class="mesas-grid" style="display: none;">
+            <!-- Las mesas se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal para gestionar mesa -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Mesa #</h2>
+                <button class="close-btn" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div id="modal-body">
+                <!-- El contenido del modal se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api/mesas';
+        let mesasData = [];
+        let mesaSeleccionada = null;
+
+        // Cargar mesas al iniciar
+        async function cargarMesas() {
+            try {
+                const response = await fetch(API_URL + '/');
+                const data = await response.json();
+                mesasData = data;
+                renderizarMesas();
+                actualizarEstadisticas();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('mesas-container').style.display = 'grid';
+            } catch (error) {
+                console.error('Error al cargar mesas:', error);
+                document.getElementById('loading').innerHTML = '❌ Error al cargar las mesas';
+            }
+        }
+
+        function renderizarMesas() {
+            const container = document.getElementById('mesas-container');
+            container.innerHTML = '';
+
+            mesasData.forEach(mesa => {
+                const mesaDiv = document.createElement('div');
+                mesaDiv.className = `mesa ${mesa.estado}`;
+                mesaDiv.onclick = () => abrirModal(mesa);
+
+                let infoExtra = `${mesa.capacidad} personas`;
+                if (mesa.sesion_actual) {
+                    infoExtra = `${mesa.sesion_actual.numero_personas} comensales`;
+                }
+
+                mesaDiv.innerHTML = `
+                    <div class="mesa-numero">${mesa.numero}</div>
+                    <div class="mesa-info">${infoExtra}</div>
+                    ${mesa.total_cuenta != '0.00' ? `<div class="mesa-total">$${mesa.total_cuenta}</div>` : ''}
+                `;
+
+                container.appendChild(mesaDiv);
+            });
+        }
+
+        function actualizarEstadisticas() {
+            const stats = {
+                libre: 0,
+                ocupada: 0,
+                reservada: 0
+            };
+
+            mesasData.forEach(mesa => {
+                stats[mesa.estado]++;
+            });
+
+            document.getElementById('stat-libres').textContent = stats.libre;
+            document.getElementById('stat-ocupadas').textContent = stats.ocupada;
+            document.getElementById('stat-reservadas').textContent = stats.reservada;
+        }
+
+        function abrirModal(mesa) {
+            mesaSeleccionada = mesa;
+            document.getElementById('modal-title').textContent = `Mesa ${mesa.numero}`;
+            
+            const modalBody = document.getElementById('modal-body');
+            
+            if (mesa.estado === 'libre') {
+                modalBody.innerHTML = `
+                    <p>Esta mesa está libre y puede ser ocupada.</p>
+                    <div class="form-group">
+                        <label>Número de personas:</label>
+                        <input type="number" id="num-personas" min="1" max="${mesa.capacidad}" value="2">
+                    </div>
+                    <button class="btn btn-success" onclick="abrirMesa()">Abrir Mesa</button>
+                `;
+            } else if (mesa.estado === 'ocupada') {
+                cargarCuentaMesa(mesa.id);
+            }
+
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        async function abrirMesa() {
+            const numPersonas = document.getElementById('num-personas').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/${mesaSeleccionada.id}/abrir/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        numero_personas: parseInt(numPersonas)
+                    })
+                });
+
+                if (response.ok) {
+                    cerrarModal();
+                    cargarMesas();
+                } else {
+                    alert('Error al abrir la mesa');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al abrir la mesa');
+            }
+        }
+
+        async function cargarCuentaMesa(mesaId) {
+            try {
+                const response = await fetch(`${API_URL}/${mesaId}/cuenta/`);
+                const data = await response.json();
+
+                const modalBody = document.getElementById('modal-body');
+                modalBody.innerHTML = `
+                    <p><strong>Comensales:</strong> ${data.sesion.numero_personas}</p>
+                    <p><strong>Hora de apertura:</strong> ${new Date(data.sesion.hora_apertura).toLocaleTimeString('es-ES')}</p>
+                    <h3>Cuenta</h3>
+                    <div id="cuenta-ordenes">
+                        ${data.ordenes.length > 0 ? 
+                            data.ordenes.map(orden => `
+                                <div class="cuenta-item">
+                                    <strong>Orden:</strong> ${orden.lineas ? orden.lineas.length : 0} items - $${orden.total}
+                                </div>
+                            `).join('') :
+                            '<p>No hay órdenes registradas</p>'
+                        }
+                    </div>
+                    <h2>Total: $${data.total}</h2>
+                    <button class="btn btn-danger" onclick="cerrarMesa()">Cerrar Mesa</button>
+                `;
+            } catch (error) {
+                console.error('Error al cargar cuenta:', error);
+            }
+        }
+
+        async function cerrarMesa() {
+            try {
+                const response = await fetch(`${API_URL}/${mesaSeleccionada.id}/cerrar/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    cerrarModal();
+                    cargarMesas();
+                } else {
+                    alert('Error al cerrar la mesa');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cerrar la mesa');
+            }
+        }
+
+        // Actualizar automáticamente cada 10 segundos
+        setInterval(cargarMesas, 10000);
+
+        // Cargar al inicio
+        cargarMesas();
+    </script>
+</body>
+</html>

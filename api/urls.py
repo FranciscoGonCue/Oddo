@@ -1,11 +1,9 @@
-from rest_framework.routers import DefaultRouter
-from django.urls import path, include
-from .views import ItemViewSet, FacturaViewSet
+from django.urls import path
 
-router = DefaultRouter()
-router.register(r'items', ItemViewSet, basename='item')
-router.register(r'facturas', FacturaViewSet, basename='factura')
+# La app 'api' se mantiene vacía
+# Todas las URLs han sido movidas a apps específicas
+# Las URLs se definen ahora en oddo_project/urls.py
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Esta app ya no tiene endpoints propios
 ]
