@@ -117,17 +117,45 @@ class MesaViewSet(viewsets.ModelViewSet):
             orden.metodo_pago = metodo_pago
             orden.save()
         
-        # Generar factura si hay cliente
+        # Generar factura con PDF si hay cliente
         factura = None
         if sesion.cliente and total > 0:
-            from invoicing.models import Factura, Pago
+            from invoicing.models import Factura, Pago, LineaFactura
+            from django.core.files.base import ContentFile
             
+            # Crear la factura
             factura = Factura.objects.create(
                 origen=f"Mesa {mesa.numero} - Sesión {str(sesion.id)[:8]}",
                 socio=sesion.cliente,
+                vendedor=request.user.username if request.user.is_authenticated else "Sistema",
+                cliente_nombre=sesion.cliente.nombre,
                 monto_total=total,
+                tasa_impuesto=Decimal('0.00'),
                 estado='pagado'
             )
+            
+            # Crear líneas de factura desde las órdenes POS
+            for orden in ordenes:
+                for linea_orden in orden.lineas.all():
+                    LineaFactura.objects.create(
+                        factura=factura,
+                        producto=linea_orden.producto,
+                        codigo_producto=f"PROD-{linea_orden.producto.id}" if linea_orden.producto else "",
+                        descripcion=linea_orden.producto.nombre if linea_orden.producto else "Producto",
+                        cantidad=linea_orden.cantidad,
+                        precio_unitario=linea_orden.precio_unitario,
+                        tasa_impuesto=Decimal('0.00')
+                    )
+            
+            # Generar el PDF automáticamente
+            try:
+                from invoicing.pdf_generator import generar_pdf_factura
+                pdf_buffer = generar_pdf_factura(factura)
+                pdf_filename = f'factura_{factura.numero_orden}.pdf'
+                factura.pdf_file.save(pdf_filename, ContentFile(pdf_buffer.read()), save=True)
+            except Exception as e:
+                # Si falla el PDF, lo registramos pero no detenemos el proceso
+                print(f"Error generando PDF para factura {factura.numero_orden}: {e}")
             
             # Crear el pago asociado
             Pago.objects.create(
@@ -151,7 +179,8 @@ class MesaViewSet(viewsets.ModelViewSet):
         
         if factura:
             response_data['factura_id'] = str(factura.id)
-            response_data['factura_numero'] = factura.origen
+            response_data['factura_numero'] = factura.numero_orden
+            response_data['pdf_url'] = factura.pdf_file.url if factura.pdf_file else None
         
         return Response(response_data)
     

@@ -91,18 +91,45 @@ class OrdenPOS(models.Model):
         
         super().save(*args, **kwargs)
         
-        # Si cambia a "Fiado/Deuda", crear factura automáticamente
+        # Si cambia a "Fiado/Deuda", crear factura automáticamente con PDF
         if self.estado == 'fiado' and estado_anterior != 'fiado' and self.cliente:
-            from invoicing.models import Factura
+            from invoicing.models import Factura, LineaFactura
+            from django.core.files.base import ContentFile
+            
             total = self.obtener_total()
             if total > 0:
                 # Crear factura
                 factura = Factura.objects.create(
                     origen=f"POS-{str(self.id)[:8]}",
                     socio=self.cliente,
+                    vendedor="Sistema POS",
+                    cliente_nombre=self.cliente.nombre,
                     monto_total=total,
+                    tasa_impuesto=Decimal('0.00'),
                     estado='abierto'
                 )
+                
+                # Crear líneas de factura desde las líneas del POS
+                for linea in self.lineas.all():
+                    LineaFactura.objects.create(
+                        factura=factura,
+                        producto=linea.producto,
+                        codigo_producto=f"PROD-{linea.producto.id}",
+                        descripcion=linea.producto.nombre,
+                        cantidad=linea.cantidad,
+                        precio_unitario=linea.precio_unitario,
+                        tasa_impuesto=Decimal('0.00')
+                    )
+                
+                # Generar el PDF automáticamente
+                try:
+                    from invoicing.pdf_generator import generar_pdf_factura
+                    pdf_buffer = generar_pdf_factura(factura)
+                    pdf_filename = f'factura_{factura.numero_orden}.pdf'
+                    factura.pdf_file.save(pdf_filename, ContentFile(pdf_buffer.read()), save=True)
+                except Exception as e:
+                    print(f"Error generando PDF para factura {factura.numero_orden}: {e}")
+                
                 # Actualizar deuda del socio
                 self.cliente.saldo_deuda = Decimal(str(self.cliente.saldo_deuda)) + total
                 self.cliente.save()
@@ -114,6 +141,7 @@ class LineaOrdenPOS(models.Model):
     orden_pos = models.ForeignKey(OrdenPOS, on_delete=models.CASCADE, related_name='lineas')
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.IntegerField(default=1, help_text="Cantidad")
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Precio unitario en el momento de la venta")
     precio_subtotal = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
@@ -125,9 +153,13 @@ class LineaOrdenPOS(models.Model):
 
     def save(self, *args, **kwargs):
         """Calcular subtotal y reducir stock automáticamente"""
+        # Guardar precio unitario si no está definido
+        if not self.precio_unitario or self.precio_unitario == 0:
+            self.precio_unitario = self.producto.precio_venta
+        
         # Calcular precio subtotal
         if not self.precio_subtotal or self.precio_subtotal == 0:
-            self.precio_subtotal = self.producto.precio_venta * self.cantidad
+            self.precio_subtotal = self.precio_unitario * self.cantidad
         
         is_new = self.pk is None
         super().save(*args, **kwargs)
